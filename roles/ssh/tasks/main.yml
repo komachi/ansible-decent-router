@@ -1,0 +1,4 @@
+- name: Install openssh-sftp-server
+  opkg:
+    name: openssh-sftp-server
+    state: present

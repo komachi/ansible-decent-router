@@ -1,0 +1,9 @@
+- name: Install luci
+  opkg:
+    name: luci,luci-theme-bootstrap,luci-app-opkg
+    state: present
+
+- name: Configure luci
+  copy:
+    src: luci
+    dest: "/etc/config/luci"

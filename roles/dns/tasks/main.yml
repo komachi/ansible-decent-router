@@ -1,0 +1,67 @@
+
+- name: Install stubby
+  opkg:
+    name: stubby
+    state: present
+
+- name: Configure stubby
+  copy:
+    src: stubby
+    dest: "/etc/config/stubby"
+  register: stubbyconfigure
+
+- name: Restart stubby
+  when: stubbyconfigure.changed
+  service:
+    name: stubby
+    state: restarted
+    enabled: yes
+
+- name: Enable stubby
+  service:
+    name: stubby
+    state: started
+    enabled: yes
+
+- name: Install unbound
+  opkg:
+    name: unbound
+    state: present
+
+- name: Disable kresd
+  service:
+    name: kresd
+    state: stopped
+    enabled: no
+  ignore_errors: yes
+
+- name: Remove knot
+  opkg:
+    name: knot-resolver
+    state: absent
+
+- name: Configure resolver
+  copy:
+    src: resolver
+    dest: "/etc/config/resolver"
+  register: resolverconfigure
+
+- name: Restart resolver
+  when: resolverconfigure.changed
+  service:
+    name: resolver
+    state: restarted
+    enabled: yes
+
+- name: Configure unbound
+  template:
+    src: unbound.conf.j2
+    dest: "/etc/unbound/unbound.conf"
+  register: unboundconfigure
+
+- name: Restart unbound
+  when: unboundconfigure.changed
+  service:
+    name: unbound
+    state: restarted
+    enabled: yes

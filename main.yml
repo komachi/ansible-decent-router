@@ -1,0 +1,78 @@
+- hosts: all
+  become: True
+  gather_facts: True
+  roles:
+    - ssh
+    - system
+    - luci
+    - network
+    - dns
+    - adblock
+  vars_prompt:
+    - name: country_code
+      prompt: "Country code"
+      private: no
+      default: "UA"
+    - name: timezone
+      prompt: "Timezone"
+      private: no
+      default: "MSK-3"
+    - name: zonename
+      prompt: "Time zone name"
+      private: no
+      default: "Europe/Moscow"
+    - name: hostname
+      prompt: "Hostname"
+      private: no
+      default: "turris"
+    - name: local_ip
+      prompt: "IP range of your home local network"
+      private: no
+      default: "192.168.0.0/16"
+    - name: router_ip
+      prompt: "IP addr of router"
+      private: no
+      default: "192.168.1.1"
+    - name: mac_addr
+      prompt: "router mac address"
+      private: no
+    - name: router_guest_ip
+      prompt: "IP addr of guest interface"
+      private: no
+      default: "10.111.222.1"
+    - name: ula_prefix
+      prompt: "IPv6 ULA prefix"
+      private: no
+      default: "fd9d:1b60:83cc::/48"
+    - name: pppoe_username
+      prompt: "pppoe username"
+      private: no
+    - name: pppoe_password
+      prompt: "pppoe password"
+      private: yes
+    - name: mullvad_account
+      prompt: "Mullvad account number"
+    - name: ssid
+      prompt: "SSID"
+      private: no
+    - name: core_password
+      prompt: "Core WiFi password"
+    - name: guest_password
+      prompt: "Guest WiFi password"
+  vars:
+  # dev-sec vars
+    sysctl_overwrite:
+      net.ipv6.conf.all.disable_ipv6: 0
+      net.ipv4.ip_forward: 1
+      net.ipv6.conf.all.forwarding: 1
+      net.ipv6.conf.default.forwarding: 1
+      vm.mmap_rnd_bits: 32
+      vm.mmap_rnd_compat_bits: 16
+    ufw_manage_defaults: False
+    ssh_server_enabled: True
+    ssh_server_hardening: yes
+    ssh_use_dns: yes
+    ssh_permit_root_login: yes
+    sftp_enabled: yes
+    os_auditd_enabled: false
+    network_ipv6_enable: True

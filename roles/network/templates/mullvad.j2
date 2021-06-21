@@ -1,0 +1,3 @@
+WG_ADDR="{{ mullvad_wireguard_address.content.split(',')[0] | replace('/32', '') }}"
+WG_ADDR6="{{ mullvad_wireguard_address.content.split(',')[1] | replace('/128', '') }}"
+WG_KEY="{{ mullvad_wireguard_private_key }}"

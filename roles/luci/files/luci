@@ -1,0 +1,50 @@
+config core 'main'
+	option lang 'auto'
+	option mediaurlbase '/luci-static/bootstrap'
+	option resourcebase '/luci-static/resources'
+	option ubuspath '/ubus/'
+
+config extern 'flash_keep'
+	option uci '/etc/config/'
+	option dropbear '/etc/dropbear/'
+	option openvpn '/etc/openvpn/'
+	option passwd '/etc/passwd'
+	option opkg '/etc/opkg.conf'
+	option firewall '/etc/firewall.user'
+	option uploads '/lib/uci/upload/'
+
+config internal 'languages'
+	option en 'English'
+
+config internal 'sauth'
+	option sessionpath '/tmp/luci-sessions'
+	option sessiontime '3600'
+
+config internal 'ccache'
+	option enable '1'
+
+config internal 'themes'
+	option Bootstrap '/luci-static/bootstrap'
+
+config internal 'apply'
+	option rollback '90'
+	option holdoff '4'
+	option timeout '5'
+	option display '1.5'
+
+config internal 'diag'
+	option dns 'rg.ru'
+	option ping '8.8.8.8'
+	option route '8.8.8.8'
+
+config command
+	option name 'Start resolver debugging'
+	option command '/etc/resolver/resolver-debug.sh start'
+
+config command
+	option name 'Stop resolver debugging'
+	option command '/etc/resolver/resolver-debug.sh stop'
+
+config command
+	option name 'Print debug log'
+	option command '/etc/resolver/resolver-debug.sh print-logs'

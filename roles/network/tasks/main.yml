@@ -1,0 +1,155 @@
+- name: Get wlan0 mac addr
+  slurp:
+    src: /sys/class/net/wlan0/address
+  register: wlan0_macaddr
+
+- name: Get wlan1 mac addr
+  slurp:
+    src: /sys/class/net/wlan1/address
+  register: wlan1_macaddr
+
+- name: Install wireguard and other useful packages
+  opkg:
+    name: luci-proto-wireguard,luci-app-wireguard,luci-app-firewall,luci-proto-ipv6,wireguard,kmod-wireguard,wireguard-tools,jq
+    state: present
+
+- name: Trying to find already registred private key
+  shell: "grep '^WG_KEY=' /etc/config/mullvad | xargs | cut -d'=' -f2,2- | xargs"
+  changed_when: False
+  register: mullvad_wireguard_find_private_key
+  when:
+    - mullvad_account is defined
+    - mullvad_account != ''
+
+- set_fact:
+    mullvad_wireguard_private_key: "{{ mullvad_wireguard_find_private_key.stdout }}"
+  when:
+    - mullvad_account is defined
+    - mullvad_account != ''
+    - mullvad_wireguard_find_private_key.stdout != ''
+
+- name: Generate wireguard private key
+  shell: wg genkey
+  register: mullvad_wireguard_generate_private_key
+  when:
+    - mullvad_account is defined
+    - mullvad_account != ''
+    - mullvad_wireguard_find_private_key.stdout == ''
+
+- set_fact:
+    mullvad_wireguard_private_key: "{{ mullvad_wireguard_generate_private_key.stdout }}"
+  when:
+    - mullvad_account is defined
+    - mullvad_account != ''
+    - mullvad_wireguard_find_private_key.stdout == ''
+
+- name: Get public key from our private key
+  shell: "echo \"{{ mullvad_wireguard_private_key }}\" | wg pubkey"
+  changed_when: False
+  register: mullvad_wireguard_public_key
+  when:
+    - mullvad_account is defined
+    - mullvad_account != ''
+
+- name: Register our public key on mullvad
+  uri:
+    url: "https://api.mullvad.net/wg/"
+    method: POST
+    body_format: form-urlencoded
+    body:
+      account: "{{ mullvad_account }}"
+      pubkey: "{{ mullvad_wireguard_public_key.stdout }}"
+    return_content: yes
+  register: mullvad_wireguard_address
+  failed_when: mullvad_wireguard_address.content is not match('^[0-9a-f:/.,]+$')
+  when:
+    - mullvad_account is defined
+    - mullvad_account != ''
+
+- name: Copy mullvad config
+  template:
+    src: mullvad.j2
+    dest: "/etc/config/mullvad"
+  when:
+    - mullvad_account is defined
+    - mullvad_account != ''
+
+- name: Configure firewall
+  template:
+    src: firewall.j2
+    dest: "/etc/config/firewall"
+  register: firewallconfigure
+
+- name: Restart firewall
+  when: firewallconfigure.changed
+  service:
+    name: firewall
+    state: reloaded
+    enabled: yes
+
+- name: Configure network
+  template:
+    src: network.j2
+    dest: "/etc/config/network"
+  register: networkconfigure
+
+- name: Configure wireless
+  template:
+    src: wireless.j2
+    dest: "/etc/config/wireless"
+  register: wirelessconfigure
+
+- name: Configure dhcp
+  template:
+    src: dhcp.j2
+    dest: "/etc/config/dhcp"
+
+- name: Restart network
+  when: networkconfigure.changed or wirelessconfigure.changed
+  service:
+    name: network
+    state: restarted
+    enabled: yes
+
+- name: Ensures /srv/scripts exists
+  file:
+    path: "/srv/scripts"
+    state: directory
+
+- name: Copy wg helper scripts
+  copy:
+    src: "{{ item }}"
+    dest: "/srv/scripts/{{ item }}"
+    mode: '+x'
+  when:
+    - mullvad_account is defined
+    - mullvad_account != ''
+  loop:
+    - 'rotate_wg.sh'
+    - 'stop_wg.sh'
+    - 'wg_watchdog.sh'
+
+- name: Run wg rotation script
+  shell: /srv/scripts/rotate_wg.sh
+  when:
+    - mullvad_account is defined
+    - mullvad_account != ''
+
+- name: Add wg rotation script to cron
+  cron:
+    name: "rotate_wg"
+    hour: "5"
+    minute: "0"
+    job: "/srv/scripts/rotate_wg.sh"
+  when:
+    - mullvad_account is defined
+    - mullvad_account != ''
+
+- name: Add wg watchdog script to cron
+  cron:
+    name: "wg_watchdog"
+    minute: "1"
+    job: "/srv/scripts/wg_watchdog.sh"
+  when:
+    - mullvad_account is defined
+    - mullvad_account != ''

@@ -1,0 +1,15 @@
+- name: Install adblock
+  opkg:
+    name: adblock,luci-app-adblock,curl
+    state: present
+
+- name: Configure adblock
+  copy:
+    src: adblock
+    dest: "/etc/config/adblock"
+
+- name: Enable adblock
+  service:
+    name: adblock
+    state: restarted
+    enabled: yes

@@ -1,0 +1,36 @@
+server:
+  cache-max-ttl: 86400
+  cache-min-ttl: 300
+  log-local-actions: no
+  log-queries: no
+  log-replies: no
+  log-servfail: no
+  verbosity: 0
+  use-syslog: yes
+  qname-minimisation: yes
+  aggressive-nsec: yes
+  prefetch: yes
+  serve-expired: yes
+  deny-any: yes
+  hide-identity: yes
+  hide-version: yes
+  private-address: 10.0.0.0/8
+  private-address: 172.16.0.0/12
+  private-address: 192.168.0.0/16
+  private-address: 169.254.0.0/16
+  private-address: fd00::/8
+  private-address: fe80::/10
+  private-address: ::ffff:0:0/96
+  directory: "/etc/unbound"
+  root-hints: "/etc/unbound/named.cache"
+  pidfile: "/var/run/unbound.pid"
+  do-not-query-localhost: no
+  local-zone: "use-application-dns.net." always_nxdomain
+  interface: 0.0.0.0
+  access-control: 127.0.0.0/8 allow
+  access-control: {{ local_ip }} allow
+  access-control: 10.0.0.0/8 allow
+forward-zone:
+  name: "."
+    forward-addr: 127.0.0.1@5453
+    forward-addr: ::1@5453
