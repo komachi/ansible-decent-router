@@ -64,5 +64,10 @@ uci set firewall.${WG_IF}_guest="forwarding"
 uci set firewall.${WG_IF}_guest.src="WGZONE"
 uci set firewall.${WG_IF}_guest.dest="guest"
 
+uci -q delete firewall.lan_forward_wan
+uci -q delete firewall.guest_forward_wan
+uci -q delete firewall.wan_forward_lan
+uci -q delete firewall.wan_forward_guest
+
 uci commit firewall
 /etc/init.d/firewall restart

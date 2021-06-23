@@ -1,6 +1,7 @@
 
 config defaults
-	option syn_flood '1'
+	option synflood_protect '1'
+	option drop_invalid '1'
 	option input 'ACCEPT'
 	option output 'ACCEPT'
 	option forward 'REJECT'
@@ -22,9 +23,17 @@ config zone
 	option masq '1'
 	option mtu_fix '1'
 
-config forwarding
+config forwarding 'lan_forward_wan'
+	option enabled '1'
+	option name 'lan to wan forward'
 	option src 'lan'
 	option dest 'wan'
+
+config forwarding 'wan_forward_lan'
+	option enabled '1'
+	option name 'wan to lan forward'
+	option src 'wan'
+	option dest 'lan'
 
 config rule
 	option name 'Allow-DHCP-Renew'
@@ -138,6 +147,12 @@ config forwarding 'guest_forward_wan'
 	option src 'guest'
 	option dest 'wan'
 
+config forwarding 'wan_forward_guest'
+	option enabled '1'
+	option name 'wan to guest forward'
+	option src 'wan'
+	option dest 'guest'
+
 config rule 'guest_dns_rule'
 	option enabled '1'
 	option name 'guest dns rule'
@@ -178,3 +193,15 @@ config rule 'wan_https_rule'
 	option dest_port '443'
 	option proto 'tcp'
 	option src 'wan'
+
+config redirect
+	option src 'lan'
+	option name 'Intercept-DNS-lan'
+	option src_dport '53'
+	option target 'DNAT'
+
+config redirect
+	option src 'guest'
+	option name 'Intercept-DNS-guest'
+	option src_dport '53'
+	option target 'DNAT'
