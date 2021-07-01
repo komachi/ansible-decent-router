@@ -40,18 +40,18 @@
     name: knot-resolver
     state: absent
 
-- name: Configure resolver
-  copy:
-    src: resolver
-    dest: "/etc/config/resolver"
-  register: resolverconfigure
-
-- name: Restart resolver
-  when: resolverconfigure.changed
+- name: Disable resolver service included in TurrisOS, it breaks unbound config
   service:
     name: resolver
-    state: restarted
-    enabled: yes
+    state: stopped
+    enabled: no
+  ignore_errors: yes
+
+- name: Configure unbound to use real config
+  copy:
+    src: unbound
+    dest: "/etc/config/unbound"
+  register: unbounduciconfigure
 
 - name: Configure unbound
   template:
@@ -60,7 +60,7 @@
   register: unboundconfigure
 
 - name: Restart unbound
-  when: unboundconfigure.changed
+  when: unboundconfigure.changed or unbounduciconfigure.changed
   service:
     name: unbound
     state: restarted
