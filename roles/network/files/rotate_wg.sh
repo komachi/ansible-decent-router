@@ -1,14 +1,14 @@
 #!/bin/sh
 export $(grep -v '#.*' /etc/config/mullvad | xargs)
-WG_SERVERS=`curl https://api.mullvad.net/public/relays/wireguard/v1/`
+WG_SERVERS="$(curl https://api.mullvad.net/public/relays/wireguard/v1/)"
 if test $? -ne 0; then
   exit $?
 fi
-WG_SERVERS_FILTERED=`echo "$WG_SERVERS" | jq '[ .countries[] | select( .code != "au" and .code != "gb" and .code != "br" and .code != "us" and .code != "ca" and .code != "hk" and .code != "jp" and .code != "nz" and .code != "sg" ).cities[].relays[] ]'`
-WG_SERVERS_LENGTH=`echo "$WG_SERVERS_FILTERED" | jq -r '. | length'`
-SELECTED_WG_SERVER=`echo "$WG_SERVERS_FILTERED" | jq --arg i $(($RANDOM % $WG_SERVERS_LENGTH)) '.[$i | tonumber]'`
-WG_SERV=`echo "$SELECTED_WG_SERVER" | jq -r '.ipv4_addr_in'`
-WG_PUB=`echo "$SELECTED_WG_SERVER" | jq -r '.public_key'`
+WG_SERV="$(fping -a --count=10 --timeout=500 --iface=pppoe-wan $(echo "$WG_SERVERS" | jq -r '[ .countries[] | select( .code != "au" and .code != "gb" and .code != "us" and .code != "ca" and .code != "hk" and .code != "nz").cities[].relays[] ] | map(.ipv4_addr_in) | .[]'  | tr '\r\n' ' ') 2>&1 1>/dev/null | awk -F' +|/' '/min\/avg\/max/ {print $15,$1}' | sort -n | head -n 15 | sed -n $(($RANDOM % 15 + 1))' p' | cut -d' ' -f2)"
+if test $? -ne 0; then
+  exit $?
+fi
+WG_PUB="$(echo "$WG_SERVERS" | jq -r --arg ip "$WG_SERV" '.countries[].cities[].relays[] | select(.ipv4_addr_in==$ip).public_key')"
 WG_IF="wg0"
 WG_PORT="51820"
 

@@ -8,9 +8,9 @@
     src: /sys/class/net/wlan1/address
   register: wlan1_macaddr
 
-- name: Install wireguard and other useful packages
+- name: Install wireguard and other required packages
   opkg:
-    name: luci-proto-wireguard,luci-app-wireguard,luci-app-firewall,luci-proto-ipv6,wireguard,kmod-wireguard,wireguard-tools,jq
+    name: luci-proto-wireguard,luci-app-wireguard,luci-app-firewall,luci-proto-ipv6,wireguard,kmod-wireguard,wireguard-tools,jq,fping
     state: present
 
 - name: Trying to find already registred private key
